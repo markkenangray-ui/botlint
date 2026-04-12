@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>botlint-slack — Testing utilities for Slack bots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #ffffff;
+  --bg-off: #F7F7F5;
+  --bg-dark: #0E0E0C;
+  --text: #0E0E0C;
+  --text-inv: #ffffff;
+  --muted: #6B6B65;
+  --muted-inv: rgba(255,255,255,0.55);
+  --border: #E8E8E4;
+  --border-dark: rgba(255,255,255,0.1);
+  --accent: #3D7EFF;
+  --green: #1A7A4A;
+  --green-bg: #EAF5EE;
+  --red: #C0392B;
+  --red-bg: #FDEEEC;
+  --blue-bg: #EDF2FF;
+  --blue: #3050B8;
+  --mono: 'JetBrains Mono', monospace;
+  --serif: 'Instrument Serif', serif;
+  --sans: 'Inter', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2.5rem;
+  height: 64px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-left { display: flex; align-items: center; gap: 2.5rem; }
+.nav-logo { font-family: var(--mono); font-size: 15px; font-weight: 500; }
+.nav-links { display: flex; gap: 1.75rem; }
+.nav-links a { font-size: 14px; color: var(--muted); transition: color 0.15s; }
+.nav-links a:hover { color: var(--text); }
+.nav-right { display: flex; align-items: center; gap: 1rem; }
+
+.btn-ghost { font-size: 14px; color: var(--muted); padding: 0.5rem 0.75rem; transition: color 0.15s; display: inline-block; }
+.btn-ghost:hover { color: var(--text); }
+
+.btn-solid {
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 0.55rem 1.25rem;
+  background: var(--text);
+  color: var(--text-inv);
+  border-radius: 6px;
+  transition: opacity 0.15s;
+  display: inline-block;
+}
+.btn-solid:hover { opacity: 0.82; }
+
+.hero {
+  padding: 6rem 2.5rem 5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--bg-off);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.3rem 1rem;
+  margin-bottom: 2rem;
+}
+.hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--green); border-radius: 50%; flex-shrink: 0; }
+
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+}
+.hero h1 em { font-style: italic; color: var(--muted); }
+
+.hero-sub {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 520px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+.hero-actions { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+
+.btn-primary {
+  font-family: var(--mono);
+  font-size: 14px;
+  padding: 0.8rem 2rem;
+  background: var(--text);
+  color: var(--text-inv);
+  border-radius: 6px;
+  transition: opacity 0.15s;
+  display: inline-block;
+}
+.btn-primary:hover { opacity: 0.82; }
+
+.btn-sec {
+  font-family: var(--mono);
+  font-size: 14px;
+  padding: 0.8rem 2rem;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  transition: color 0.15s, border-color 0.15s;
+  display: inline-block;
+}
+.btn-sec:hover { color: var(--text); border-color: #C8C8C2; }
+
+.install-line {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.install-line code { color: var(--text); }
+
+.copy-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--bg-off);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.copy-btn:hover { color: var(--text); }
+
+.stats-bar {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-off);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.stat-item { padding: 2rem 1.5rem; text-align: center; border-right: 1px solid var(--border); }
+.stat-item:last-child { border-right: none; }
+.stat-num { font-family: var(--serif); font-size: 2.75rem; font-weight: 400; line-height: 1; color: var(--text); margin-bottom: 0.4rem; letter-spacing: -0.02em; }
+.stat-label { font-size: 13px; color: var(--muted); font-weight: 300; }
+
+.feature-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 500px;
+  border-bottom: 1px solid var(--border);
+}
+.feature-split.flip { direction: rtl; }
+.feature-split.flip > * { direction: ltr; }
+
+.split-copy { padding: 5rem 4rem; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--border); }
+.feature-split.flip .split-copy { border-right: none; border-left: 1px solid var(--border); }
+
+.split-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.25rem; }
+
+.split-copy h2 {
+  font-family: var(--serif);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin-bottom: 1.25rem;
+}
+.split-copy p { font-size: 15px; color: var(--muted); line-height: 1.75; font-weight: 300; max-width: 380px; }
+
+.split-visual { background: var(--bg-off); display: flex; align-items: center; justify-content: center; padding: 3rem; }
+
+.ui-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+}
+.ui-card-header {
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-off);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.dot-r { background: #FF5F56; }
+.dot-y { background: #FFBD2E; }
+.dot-g { background: #27C93F; }
+.file-label { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: 4px; }
+.ui-card-body { padding: 1.5rem; font-family: var(--mono); font-size: 12.5px; line-height: 1.9; }
+
+.tc { color: #6B8CBA; }
+.tk { color: #9068BE; }
+.ts { color: #3A7A3A; }
+.tf { color: #2866A8; }
+.tv { color: #A06820; }
+.tn { color: #2A2A2A; }
+.tc2 { color: #9A9A94; }
+
+.result-card { margin: 0 1.5rem 1.5rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.result-row { display: flex; align-items: center; gap: 10px; padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; }
+.result-row:last-child { border-bottom: none; }
+.result-row.error { background: var(--red-bg); color: var(--red); }
+.result-row.success { background: var(--green-bg); color: var(--green); }
+.result-icon { width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; font-weight: 600; }
+.result-row.error .result-icon { background: rgba(192,57,43,0.15); }
+.result-row.success .result-icon { background: rgba(26,122,74,0.15); }
+
+.mock-timeline { display: flex; flex-direction: column; }
+.mock-step { display: flex; gap: 1rem; padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border); font-size: 13px; }
+.mock-step:last-child { border-bottom: none; }
+.mock-step-num { font-family: var(--mono); font-size: 11px; color: var(--muted); padding-top: 2px; flex-shrink: 0; width: 20px; }
+.mock-step.done .mock-step-num { color: var(--green); }
+.mock-step-title { font-weight: 500; font-size: 13px; margin-bottom: 2px; }
+.mock-step-detail { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+
+.assert-row { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1.25rem; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; }
+.assert-row:last-child { border-bottom: none; }
+.assert-key { color: var(--muted); }
+.assert-val { color: var(--text); font-weight: 500; }
+.assert-pass { color: var(--green); font-size: 11px; }
+
+.docs-section {
+  padding: 5rem 2.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--border);
+}
+.docs-section h2 { font-family: var(--serif); font-size: clamp(1.75rem, 3vw, 2.75rem); font-weight: 400; letter-spacing: -0.015em; margin-bottom: 0.75rem; }
+.docs-section .sub { font-size: 15px; color: var(--muted); font-weight: 300; margin-bottom: 3rem; }
+
+.docs-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 0; }
+.docs-tab {
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 0.75rem 1.5rem;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  transition: color 0.15s;
+}
+.docs-tab.active { color: var(--text); border-bottom-color: var(--text); }
+.docs-tab:hover { color: var(--text); }
+
+.docs-panel { display: none; }
+.docs-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
+
+.docs-copy h3 { font-family: var(--serif); font-size: 1.4rem; font-weight: 400; margin-bottom: 0.75rem; letter-spacing: -0.01em; }
+.docs-copy p { font-size: 14px; color: var(--muted); line-height: 1.7; font-weight: 300; margin-bottom: 1rem; }
+
+.docs-copy ul { list-style: none; margin-top: 1rem; }
+.docs-copy ul li { font-size: 14px; color: var(--muted); padding: 0.4rem 0; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 8px; font-weight: 300; }
+.docs-copy ul li:last-child { border-bottom: none; }
+.docs-copy ul li::before { content: '→'; font-family: var(--mono); font-size: 11px; color: var(--text); margin-top: 3px; flex-shrink: 0; }
+
+.code-block {
+  background: var(--bg-off);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.code-block-header { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: var(--bg); }
+.code-block-body { padding: 1.5rem; font-family: var(--mono); font-size: 12.5px; line-height: 1.9; color: #3A3A34; overflow-x: auto; }
+
+.matcher-grid { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 2rem; }
+.matcher-row { background: var(--bg); padding: 1.25rem 1.5rem; display: grid; grid-template-columns: 2fr 3fr; gap: 1.5rem; align-items: center; transition: background 0.15s; }
+.matcher-row:hover { background: var(--bg-off); }
+.matcher-name { font-family: var(--mono); font-size: 13px; color: var(--text); font-weight: 500; }
+.matcher-desc { font-size: 13px; color: var(--muted); font-weight: 300; line-height: 1.5; }
+
+.mocked-methods { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 2rem; }
+.method-cell { background: var(--bg); padding: 1.25rem 1.5rem; transition: background 0.15s; }
+.method-cell:hover { background: var(--bg-off); }
+.method-name { font-family: var(--mono); font-size: 13px; color: var(--text); margin-bottom: 4px; }
+.method-return { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+
+.blocks-grid { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.block-cell { padding: 1.5rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.block-cell:hover { background: var(--bg-off); }
+.block-cell:nth-child(3n) { border-right: none; }
+.block-cell:nth-child(n+7) { border-bottom: none; }
+.block-name { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 0.4rem; }
+.block-rules { font-size: 13px; color: var(--muted); font-weight: 300; line-height: 1.5; }
+
+.testimonials { background: var(--bg-dark); padding: 5rem 2.5rem; }
+.testimonials-inner { max-width: 1100px; margin: 0 auto; }
+.testimonials h2 { font-family: var(--serif); font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 400; color: var(--text-inv); margin-bottom: 3rem; letter-spacing: -0.01em; }
+.testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+.tcard { background: rgba(255,255,255,0.05); border: 1px solid var(--border-dark); border-radius: 10px; padding: 1.75rem; }
+.tcard blockquote { font-size: 14px; color: rgba(255,255,255,0.72); line-height: 1.7; margin-bottom: 1.25rem; font-weight: 300; font-style: italic; }
+.tcard-source { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.35); }
+.tcard-source strong { color: rgba(255,255,255,0.6); }
+
+.roadmap-section { padding: 5rem 2.5rem; max-width: 1100px; margin: 0 auto; border-bottom: 1px solid var(--border); }
+.roadmap-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2.5rem; gap: 2rem; flex-wrap: wrap; }
+.roadmap-header h2 { font-family: var(--serif); font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 400; letter-spacing: -0.015em; }
+.roadmap-header p { font-size: 14px; color: var(--muted); max-width: 300px; font-weight: 300; line-height: 1.6; }
+
+.roadmap-list { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.roadmap-item { display: flex; align-items: flex-start; gap: 1.5rem; padding: 1.75rem 2rem; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.roadmap-item:last-child { border-bottom: none; }
+.roadmap-item:hover { background: var(--bg-off); }
+
+.rm-badge { font-family: var(--mono); font-size: 11px; padding: 4px 12px; border-radius: 20px; flex-shrink: 0; margin-top: 3px; }
+.rm-live { background: var(--green-bg); color: var(--green); border: 1px solid rgba(26,122,74,0.2); }
+.rm-next { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(48,80,184,0.2); }
+.rm-later { background: var(--bg-off); color: var(--muted); border: 1px solid var(--border); }
+
+.rm-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+.rm-desc { font-size: 13px; color: var(--muted); font-weight: 300; line-height: 1.6; }
+
+.rm-features { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.75rem; }
+.rm-feature { font-family: var(--mono); font-size: 11px; background: var(--bg-off); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; color: var(--muted); }
+
+.cta-dark { background: var(--bg-dark); padding: 7rem 2.5rem; text-align: center; }
+.cta-dark h2 { font-family: var(--serif); font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 400; color: var(--text-inv); letter-spacing: -0.02em; line-height: 1.08; margin-bottom: 1.25rem; }
+.cta-dark h2 em { font-style: italic; color: rgba(255,255,255,0.4); }
+.cta-dark p { font-size: 15px; color: rgba(255,255,255,0.5); margin-bottom: 2.5rem; font-weight: 300; }
+.cta-dark-actions { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+
+.btn-white { font-family: var(--mono); font-size: 14px; padding: 0.8rem 2rem; background: var(--bg); color: var(--text); border-radius: 6px; transition: opacity 0.15s; display: inline-block; }
+.btn-white:hover { opacity: 0.88; }
+.btn-ghost-white { font-family: var(--mono); font-size: 14px; padding: 0.8rem 2rem; background: transparent; color: rgba(255,255,255,0.5); border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); transition: color 0.15s, border-color 0.15s; display: inline-block; }
+.btn-ghost-white:hover { color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.3); }
+
+footer { border-top: 1px solid var(--border); padding: 3rem 2.5rem; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 3rem; align-items: start; }
+.footer-brand { font-family: var(--mono); font-size: 15px; font-weight: 500; margin-bottom: 0.5rem; }
+.footer-tagline { font-size: 13px; color: var(--muted); font-weight: 300; max-width: 240px; line-height: 1.6; }
+.footer-col h4 { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+.footer-col a { display: block; font-size: 14px; color: var(--muted); margin-bottom: 0.5rem; transition: color 0.15s; font-weight: 300; }
+.footer-col a:hover { color: var(--text); }
+.footer-badge { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; background: var(--green-bg); color: var(--green); border: 1px solid rgba(26,122,74,0.2); border-radius: 20px; padding: 3px 10px; margin-top: 1rem; }
+
+@media (max-width: 900px) {
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .stat-item:nth-child(2) { border-right: none; }
+  .stat-item:nth-child(3) { border-top: 1px solid var(--border); }
+  .testimonials-grid { grid-template-columns: 1fr; }
+  footer { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+  nav { padding: 0 1.25rem; }
+  .nav-links { display: none; }
+  .hero { padding: 4rem 1.25rem 3rem; }
+  .feature-split { grid-template-columns: 1fr; }
+  .feature-split.flip { direction: ltr; }
+  .split-copy { padding: 3rem 1.5rem; border-right: none !important; border-left: none !important; border-bottom: 1px solid var(--border); }
+  .docs-panel.active { grid-template-columns: 1fr; }
+  .blocks-grid { grid-template-columns: 1fr 1fr; }
+  .blocks-grid .block-cell:nth-child(3n) { border-right: 1px solid var(--border); }
+  .blocks-grid .block-cell:nth-child(2n) { border-right: none; }
+  .mocked-methods { grid-template-columns: 1fr; }
+  .matcher-row { grid-template-columns: 1fr; gap: 0.5rem; }
+  .docs-section, .roadmap-section { padding: 3rem 1.25rem; }
+  footer { grid-template-columns: 1fr; padding: 2rem 1.25rem; gap: 2rem; }
+}
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+.fade { opacity: 0; animation: fadeUp 0.65s ease forwards; }
+.fade:nth-child(1) { animation-delay: 0.08s; }
+.fade:nth-child(2) { animation-delay: 0.18s; }
+.fade:nth-child(3) { animation-delay: 0.28s; }
+.fade:nth-child(4) { animation-delay: 0.38s; }
+.fade:nth-child(5) { animation-delay: 0.46s; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <div class="nav-logo">botlint-slack</div>
+    <div class="nav-links">
+      <a href="#docs">Docs</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="https://dev.to/markturk87/the-definitive-guide-to-testing-slack-bots-and-why-its-been-so-hard-5feh" target="_blank">Blog</a>
+      <a href="https://github.com/markkenangray-ui/botlint" target="_blank">GitHub</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <a href="https://github.com/markkenangray-ui/botlint" class="btn-ghost">Star on GitHub</a>
+    <a href="https://www.npmjs.com/package/botlint-slack" class="btn-solid">npm install &rarr;</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-tag fade">v0.1.2 &mdash; open source &mdash; MIT licence</div>
+  <h1 class="fade">Testing utilities<br>for <em>Slack bots.</em></h1>
+  <p class="hero-sub fade">Block Kit validation and SDK mocking. Catch invalid blocks before they reach Slack. Unit test your handlers without a real workspace or token.</p>
+  <div class="hero-actions fade">
+    <a href="https://www.npmjs.com/package/botlint-slack" class="btn-primary">View on npm</a>
+    <a href="#docs" class="btn-sec">Read the docs</a>
+  </div>
+  <div class="install-line fade">
+    <span>Install:</span>
+    <code>npm install botlint-slack --save-dev</code>
+    <button class="copy-btn" onclick="navigator.clipboard.writeText('npm install botlint-slack --save-dev');this.textContent='copied';setTimeout(()=>this.textContent='copy',1500)">copy</button>
+  </div>
+</section>
+
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-num">29</div>
+    <div class="stat-label">tests passing</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">0</div>
+    <div class="stat-label">runtime dependencies</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">10</div>
+    <div class="stat-label">block types validated</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">7</div>
+    <div class="stat-label">API methods mocked</div>
+  </div>
+</div>
+
+<div class="feature-split">
+  <div class="split-copy">
+    <p class="split-eyebrow">Block Kit validation</p>
+    <h2>Slack returns 200 OK. Even when your blocks are wrong.</h2>
+    <p>The metadata gets silently dropped. Your message appears as plain text. No error. No warning. botlint-slack validates your blocks offline &mdash; before the API ever sees them &mdash; with exact error messages including character counts and indices.</p>
+  </div>
+  <div class="split-visual">
+    <div class="ui-card">
+      <div class="ui-card-header">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="file-label">validate.test.js</span>
+      </div>
+      <div class="ui-card-body">
+        <span class="tc2">// header text exceeds the 150 char limit</span><br>
+        <span class="tk">const</span> <span class="tn">result =</span> <span class="tf">validate</span><span class="tn">([{</span><br>
+        &nbsp;&nbsp;<span class="tv">type</span><span class="tn">:</span> <span class="ts">'header'</span><span class="tn">,</span><br>
+        &nbsp;&nbsp;<span class="tv">text</span><span class="tn">: {</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="tv">type</span><span class="tn">:</span> <span class="ts">'plain_text'</span><span class="tn">,</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="tv">text</span><span class="tn">:</span> <span class="ts">'x'</span><span class="tn">.</span><span class="tf">repeat</span><span class="tn">(</span><span class="tv">203</span><span class="tn">)</span><br>
+        &nbsp;&nbsp;<span class="tn">}</span><br>
+        <span class="tn">}]);</span>
+      </div>
+      <div class="result-card">
+        <div class="result-row error">
+          <div class="result-icon">&#x2715;</div>
+          block[0].text exceeds 150 char limit (current: 203)
+        </div>
+        <div class="result-row success">
+          <div class="result-icon">&#x2713;</div>
+          validate(validBlocks) &rarr; { valid: true, errors: [] }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="feature-split flip">
+  <div class="split-copy">
+    <p class="split-eyebrow">SDK mocking</p>
+    <h2>Unit test your handlers. No token needed.</h2>
+    <p>createMockClient() is a drop-in replacement for app.client in Bolt handlers. Records every API call so you can assert on exactly what your bot sent. Zero network calls, zero credentials, runs in milliseconds.</p>
+  </div>
+  <div class="split-visual">
+    <div class="ui-card">
+      <div class="ui-card-header">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="file-label">handler.test.js</span>
+      </div>
+      <div class="mock-timeline">
+        <div class="mock-step done">
+          <div class="mock-step-num">1</div>
+          <div class="mock-step-content">
+            <div class="mock-step-title">Create mock client</div>
+            <div class="mock-step-detail">const mock = createMockClient()</div>
+          </div>
+        </div>
+        <div class="mock-step done">
+          <div class="mock-step-num">2</div>
+          <div class="mock-step-content">
+            <div class="mock-step-title">Run your handler</div>
+            <div class="mock-step-detail">await myHandler({ client: mock.client, ... })</div>
+          </div>
+        </div>
+        <div class="mock-step done">
+          <div class="mock-step-num">3</div>
+          <div class="mock-step-content">
+            <div class="mock-step-title">Assert on calls</div>
+            <div class="mock-step-detail">mock.lastCall('chat.postMessage')</div>
+          </div>
+        </div>
+      </div>
+      <div style="border-top: 1px solid var(--border);">
+        <div class="assert-row">
+          <span class="assert-key">.channel</span>
+          <span style="display:flex;align-items:center;gap:12px;"><span class="assert-val">'C123ABC'</span><span class="assert-pass">&#x2713; pass</span></span>
+        </div>
+        <div class="assert-row">
+          <span class="assert-key">.text</span>
+          <span style="display:flex;align-items:center;gap:12px;"><span class="assert-val">'approved'</span><span class="assert-pass">&#x2713; pass</span></span>
+        </div>
+        <div class="assert-row">
+          <span class="assert-key">network calls</span>
+          <span style="display:flex;align-items:center;gap:12px;"><span class="assert-val">0</span><span class="assert-pass">&#x2713; pass</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="docs-section" id="docs">
+  <h2>Documentation</h2>
+  <p class="sub">Everything you need to start testing your Slack bot today.</p>
+
+  <div class="docs-tabs">
+    <button class="docs-tab active" onclick="showTab('tab-validate', this)">validate()</button>
+    <button class="docs-tab" onclick="showTab('tab-mock', this)">createMockClient()</button>
+    <button class="docs-tab" onclick="showTab('tab-jest', this)">Jest matchers</button>
+    <button class="docs-tab" onclick="showTab('tab-blocks', this)">Block types</button>
+    <button class="docs-tab" onclick="showTab('tab-methods', this)">Mocked methods</button>
+  </div>
+
+  <div id="tab-validate" class="docs-panel active">
+    <div class="docs-copy">
+      <h3>validate(input)</h3>
+      <p>Validates Slack Block Kit structures offline without hitting the API. Accepts arrays of blocks, single block objects, modal views, or home tab views. Always returns <code style="font-family:var(--mono);font-size:13px;background:var(--bg-off);padding:1px 5px;border-radius:3px;">{ valid: boolean, errors: string[] }</code> — never throws.</p>
+      <ul>
+        <li>Pass an array of blocks to validate each one with its index in error messages</li>
+        <li>Pass a single block object to validate just that block</li>
+        <li>Pass a modal view (type: 'modal') to validate the modal wrapper and all its blocks</li>
+        <li>Pass a home tab view (type: 'home') to validate the home tab structure</li>
+        <li>Unknown block types pass through silently — botlint-slack never throws</li>
+      </ul>
+    </div>
+    <div class="code-block">
+      <div class="code-block-header">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="file-label">example.js</span>
+      </div>
+      <div class="code-block-body">
+        <span style="color:#9068BE;">const</span> <span style="color:#2A2A2A;">{ validate } =</span> <span style="color:#2866A8;">require</span><span style="color:#2A2A2A;">(</span><span style="color:#3A7A3A;">'botlint-slack'</span><span style="color:#2A2A2A;">);</span><br><br>
+        <span style="color:#9A9A94;">// Array of blocks</span><br>
+        <span style="color:#9068BE;">const</span> <span style="color:#2A2A2A;">result =</span> <span style="color:#2866A8;">validate</span><span style="color:#2A2A2A;">([</span><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;{</span> <span style="color:#A06820;">type</span><span style="color:#2A2A2A;">:</span> <span style="color:#3A7A3A;">'section'</span><span style="color:#2A2A2A;">,</span> <span style="color:#A06820;">text</span><span style="color:#2A2A2A;">: {</span> <span style="color:#A06820;">type</span><span style="color:#2A2A2A;">:</span> <span style="color:#3A7A3A;">'mrkdwn'</span><span style="color:#2A2A2A;">,</span> <span style="color:#A06820;">text</span><span style="color:#2A2A2A;">:</span> <span style="color:#3A7A3A;">'Hello'</span> <span style="color:#2A2A2A;">} }</span><br>
+        <span style="color:#2A2A2A;">]);</span><br>
+        <span style="color:#9A9A94;">// → { valid: true, errors: [] }</span><br><br>
+        <span style="color:#9A9A94;">// Modal view</span><br>
+        <span style="color:#2866A8;">validate</span><span style="color:#2A2A2A;">({</span><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;</span><span style="color:#A06820;">type</span><span style="color:#2A2A2A;">:</span> <span style="color:#3A7A3A;">'modal'</span><span style="color:#2A2A2A;">,</span><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;</span><span style="color:#A06820;">title</span><span style="color:#2A2A2A;">: {</span> <span style="color:#A06820;">type</span><span style="color:#2A2A2A;">:</span> <span style="color:#3A7A3A;">'plain_text'</span><span style="color:#2A2A2A;">,</span> <span style="color:#A06820;">text</span><span style="color:#2A2A2A;">:</span> <span style="color:#3A7A3A;">'Settings'</span> <span style="color:#2A2A2A;">},</span><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;</span><span style="color:#A06820;">callback_id</span><span style="color:#2A2A2A;">:</span> <span style="color:#3A7A3A;">'settings_modal'</span><span style="color:#2A2A2A;">,</span><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;</span><span style="color:#A06820;">blocks</span><span style="color:#2A2A2A;">: [...]</span><br>
+        <span style="color:#2A2A2A;">});</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-mock" class="docs-panel">
+    <div class="docs-copy">
+      <h3>createMockClient()</h3>
+      <p>Returns a mock object with four properties. Pass <code style="font-family:var(--mono);font-size:13px;background:var(--bg-off);padding:1px 5px;border-radius:3px;">mock.client</code> wherever your handler expects <code style="font-family:var(--mono);font-size:13px;background:var(--bg-off);padding:1px 5px;border-radius:3px;">app.client</code>. All methods resolve immediately with <code style="font-family:var(--mono);font-size:13px;background:var(--bg-off);padding:1px 5px;border-radius:3px;">{ ok: true }</code>.</p>
+      <ul>
+        <li><strong style="font-weight:500;">mock.client</strong> — drop-in for app.client, all methods are async and recorded</li>
+        <li><strong style="font-weight:500;">mock.calls</strong> — access as calls['chat.postMessage'] or calls.chat.postMessage</li>
+        <li><strong style="font-weight:500;">mock.lastCall(method)</strong> — returns args of most recent call, or null</li>
+        <li><strong style="font-weight:500;">mock.reset()</strong> — clears all recorded calls, use in beforeEach</li>
+      </ul>
+    </div>
+    <div class="code-block">
+      <div class="code-block-header">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="file-label">handler.test.js</span>
+      </div>
+      <div class="code-block-body">
+        <span style="color:#9068BE;">const</span> <span style="color:#2A2A2A;">{ createMockClient } =</span> <span style="color:#2866A8;">require</span><span style="color:#2A2A2A;">(</span><span style="color:#3A7A3A;">'botlint-slack'</span><span style="color:#2A2A2A;">);</span><br><br>
+        <span style="color:#2866A8;">describe</span><span style="color:#2A2A2A;">(</span><span style="color:#3A7A3A;">'myHandler'</span><span style="color:#2A2A2A;">, () => {</span><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;</span><span style="color:#9068BE;">let</span> <span style="color:#2A2A2A;">mock;</span><br><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;</span><span style="color:#2866A8;">beforeEach</span><span style="color:#2A2A2A;">(() => { mock =</span> <span style="color:#2866A8;">createMockClient</span><span style="color:#2A2A2A;">(); });</span><br><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;</span><span style="color:#2866A8;">it</span><span style="color:#2A2A2A;">(</span><span style="color:#3A7A3A;">'posts to correct channel'</span><span style="color:#2A2A2A;">,</span> <span style="color:#9068BE;">async</span> <span style="color:#2A2A2A;">() => {</span><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#9068BE;">await</span> <span style="color:#2866A8;">myHandler</span><span style="color:#2A2A2A;">({ client: mock.client, body: fakeBody, ack: jest.</span><span style="color:#2866A8;">fn</span><span style="color:#2A2A2A;">() });</span><br><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#9068BE;">const</span> <span style="color:#2A2A2A;">post = mock.</span><span style="color:#2866A8;">lastCall</span><span style="color:#2A2A2A;">(</span><span style="color:#3A7A3A;">'chat.postMessage'</span><span style="color:#2A2A2A;">);</span><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2866A8;">expect</span><span style="color:#2A2A2A;">(post.channel).</span><span style="color:#2866A8;">toBe</span><span style="color:#2A2A2A;">(</span><span style="color:#3A7A3A;">'C123ABC'</span><span style="color:#2A2A2A;">);</span><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2866A8;">expect</span><span style="color:#2A2A2A;">(post.text).</span><span style="color:#2866A8;">toContain</span><span style="color:#2A2A2A;">(</span><span style="color:#3A7A3A;">'approved'</span><span style="color:#2A2A2A;">);</span><br>
+        <span style="color:#2A2A2A;">&nbsp;&nbsp;});</span><br>
+        <span style="color:#2A2A2A;">});</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-jest" class="docs-panel">
+    <div class="docs-copy">
+      <h3>Jest matchers</h3>
+      <p>Custom matchers for cleaner assertions. Register once in your Jest setup file, then use across all tests.</p>
+      <div style="margin-top:1rem;">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:0.5rem;font-family:var(--mono);">jest.config.js</p>
+        <div style="background:var(--bg-off);border:1px solid var(--border);border-radius:6px;padding:0.75rem 1rem;font-family:var(--mono);font-size:12.5px;color:#3A3A34;">module.exports = { setupFilesAfterEnv: [<span style="color:#3A7A3A;">'./jest.setup.js'</span>] };</div>
+      </div>
+      <div style="margin-top:0.75rem;">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:0.5rem;font-family:var(--mono);">jest.setup.js</p>
+        <div style="background:var(--bg-off);border:1px solid var(--border);border-radius:6px;padding:0.75rem 1rem;font-family:var(--mono);font-size:12.5px;color:#3A3A34;"><span style="color:#9068BE;">const</span> setupMatchers = <span style="color:#2866A8;">require</span>(<span style="color:#3A7A3A;">'botlint-slack/jest'</span>);<br><span style="color:#2866A8;">setupMatchers</span>();</div>
+      </div>
+    </div>
+    <div>
+      <div class="matcher-grid">
+        <div class="matcher-row" style="background:var(--bg-off);font-weight:500;">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;">Matcher</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;">Usage</span>
+        </div>
+        <div class="matcher-row">
+          <span class="matcher-name">toBeValidSlackBlocks()</span>
+          <span class="matcher-desc">Asserts that an array of blocks passes validation. Fails with a full error list if invalid.</span>
+        </div>
+        <div class="matcher-row">
+          <span class="matcher-name">toBeValidSlackModal()</span>
+          <span class="matcher-desc">Asserts that a modal view object passes validation including title, callback_id, and blocks.</span>
+        </div>
+        <div class="matcher-row">
+          <span class="matcher-name">toHavePostedTo(channel)</span>
+          <span class="matcher-desc">Asserts a recorded call was sent to a specific channel ID.</span>
+        </div>
+        <div class="matcher-row">
+          <span class="matcher-name">toHaveText(text)</span>
+          <span class="matcher-desc">Asserts a recorded call's text field equals or contains the given string.</span>
+        </div>
+        <div class="matcher-row">
+          <span class="matcher-name">toHaveBlocks()</span>
+          <span class="matcher-desc">Asserts a recorded call included a non-empty blocks array.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-blocks" class="docs-panel">
+    <div class="docs-copy">
+      <h3>Validated block types</h3>
+      <p>botlint-slack validates all core Block Kit block types against Slack's actual constraints. All types also check block_id uniqueness and max length of 255 chars.</p>
+      <ul>
+        <li>Unknown block types pass through as valid — botlint-slack never blocks unknown types</li>
+        <li>Error messages include the block index, field name, and violation detail</li>
+        <li>Modal and home tab views validate the wrapper structure plus all nested blocks</li>
+      </ul>
+    </div>
+    <div class="blocks-grid" style="margin-top:0;">
+      <div class="block-cell"><div class="block-name">section</div><div class="block-rules">text &le; 3000 &bull; fields &le; 10 items &bull; each field &le; 2000 chars</div></div>
+      <div class="block-cell"><div class="block-name">actions</div><div class="block-rules">1&ndash;5 elements &bull; button label &le; 75 chars &bull; action_id &le; 255</div></div>
+      <div class="block-cell"><div class="block-name">context</div><div class="block-rules">1&ndash;10 elements &bull; text &le; 2000 &bull; image or text only</div></div>
+      <div class="block-cell"><div class="block-name">header</div><div class="block-rules">text &le; 150 chars &bull; plain_text only</div></div>
+      <div class="block-cell"><div class="block-name">modal</div><div class="block-rules">title &le; 24 chars &bull; callback_id required &bull; submit/close &le; 24</div></div>
+      <div class="block-cell"><div class="block-name">image</div><div class="block-rules">image_url &amp; alt_text required &bull; title &le; 2000 chars</div></div>
+      <div class="block-cell" style="border-bottom:none;"><div class="block-name">input</div><div class="block-rules">label &amp; element required &bull; hint &le; 2000 chars</div></div>
+      <div class="block-cell" style="border-bottom:none;"><div class="block-name">video</div><div class="block-rules">title, video_url, thumbnail_url, alt_text all required</div></div>
+      <div class="block-cell" style="border-bottom:none;"><div class="block-name">rich_text</div><div class="block-rules">elements array required &bull; basic structure validation</div></div>
+    </div>
+  </div>
+
+  <div id="tab-methods" class="docs-panel">
+    <div class="docs-copy">
+      <h3>Mocked API methods</h3>
+      <p>All methods are async and return resolved promises. No network calls are made. Calls are recorded in both flat and nested forms.</p>
+      <ul>
+        <li>Access as <code style="font-family:var(--mono);font-size:13px;background:var(--bg-off);padding:1px 5px;border-radius:3px;">mock.calls['chat.postMessage']</code> or <code style="font-family:var(--mono);font-size:13px;background:var(--bg-off);padding:1px 5px;border-radius:3px;">mock.calls.chat.postMessage</code></li>
+        <li>Each entry in the calls array is the full args object passed to the method</li>
+        <li>Use mock.reset() in beforeEach to clear between tests</li>
+        <li>mock.lastCall(method) returns null if the method was never called</li>
+      </ul>
+    </div>
+    <div class="mocked-methods" style="margin-top:0;">
+      <div class="method-cell"><div class="method-name">chat.postMessage</div><div class="method-return">→ { ok: true, ts: '123.456' }</div></div>
+      <div class="method-cell"><div class="method-name">chat.update</div><div class="method-return">→ { ok: true }</div></div>
+      <div class="method-cell"><div class="method-name">chat.delete</div><div class="method-return">→ { ok: true }</div></div>
+      <div class="method-cell"><div class="method-name">views.open</div><div class="method-return">→ { ok: true, view: { id: 'V123' } }</div></div>
+      <div class="method-cell"><div class="method-name">views.update</div><div class="method-return">→ { ok: true }</div></div>
+      <div class="method-cell"><div class="method-name">views.push</div><div class="method-return">→ { ok: true }</div></div>
+      <div class="method-cell" style="grid-column:1/-1;"><div class="method-name">users.info</div><div class="method-return">→ { ok: true, user: { id: args.user, name: 'testuser' } }</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="testimonials">
+  <div class="testimonials-inner">
+    <h2>What developers are saying</h2>
+    <div class="testimonials-grid">
+      <div class="tcard">
+        <blockquote>"It would be very convenient if this library included a utility for validating blocks. Currently, blocks are a bit brittle — changes can produce errors which can only be debugged interactively through a dummy Slack channel."</blockquote>
+        <div class="tcard-source"><strong>bolt-js #1652</strong> &mdash; 15 upvotes, open since Nov 2022</div>
+      </div>
+      <div class="tcard">
+        <blockquote>"I cannot find any framework pointers, or documentation, on how I would write reasonable unit tests for this."</blockquote>
+        <div class="tcard-source"><strong>bolt-python #380</strong> &mdash; 31 upvotes</div>
+      </div>
+      <div class="tcard">
+        <blockquote>"At this moment, there is no built-in support for testing your code using this SDK."</blockquote>
+        <div class="tcard-source"><strong>Slack maintainer</strong> &mdash; python-slack-sdk #1188</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="roadmap-section" id="roadmap">
+  <div class="roadmap-header">
+    <h2>Roadmap</h2>
+    <p>V1 is live. V2 and V3 are gated on community traction &mdash; watch download numbers for 4&ndash;6 weeks after launch.</p>
+  </div>
+  <div class="roadmap-list">
+    <div class="roadmap-item">
+      <span class="rm-badge rm-live">live</span>
+      <div>
+        <div class="rm-title">V1 &mdash; npm package</div>
+        <div class="rm-desc">Block Kit validator with specific error messages, mock client for Bolt handlers, custom Jest matchers. Zero runtime dependencies. MIT licence. Works with Jest, Mocha, or any test runner.</div>
+        <div class="rm-features">
+          <span class="rm-feature">validate()</span>
+          <span class="rm-feature">createMockClient()</span>
+          <span class="rm-feature">Jest matchers</span>
+          <span class="rm-feature">10 block types</span>
+          <span class="rm-feature">0 deps</span>
+          <span class="rm-feature">Node 18+</span>
+        </div>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <span class="rm-badge rm-next">next</span>
+      <div>
+        <div class="rm-title">V2 &mdash; E2E testing</div>
+        <div class="rm-desc">Send real messages to a test channel via the Slack Events API. Assert on real bot responses. Simulate button clicks and modal interactions. The hard problem: message correlation — knowing which response belongs to which test.</div>
+        <div class="rm-features">
+          <span class="rm-feature">BotTester class</span>
+          <span class="rm-feature">tester.send().expect()</span>
+          <span class="rm-feature">button clicks</span>
+          <span class="rm-feature">modal interactions</span>
+          <span class="rm-feature">Slack Marketplace</span>
+        </div>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <span class="rm-badge rm-later">later</span>
+      <div>
+        <div class="rm-title">V3 &mdash; cloud runner</div>
+        <div class="rm-desc">Run E2E tests in CI without managing credentials locally. GitHub Actions integration, test history, pass/fail badges for your README. Hosted on Railway.</div>
+        <div class="rm-features">
+          <span class="rm-feature">GitHub Actions</span>
+          <span class="rm-feature">test history</span>
+          <span class="rm-feature">README badges</span>
+          <span class="rm-feature">Slack failure alerts</span>
+          <span class="rm-feature">$19/month</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cta-dark">
+  <h2>Stop debugging in<br><em>real Slack channels.</em></h2>
+  <p>Catch Block Kit errors before they ship. Unit test your handlers in milliseconds. No token, no workspace, no drama.</p>
+  <div class="cta-dark-actions">
+    <a href="https://www.npmjs.com/package/botlint-slack" class="btn-white">npm install botlint-slack</a>
+    <a href="https://dev.to/markturk87/the-definitive-guide-to-testing-slack-bots-and-why-its-been-so-hard-5feh" class="btn-ghost-white">Read the guide &rarr;</a>
+  </div>
+</div>
+
+<footer>
+  <div>
+    <div class="footer-brand">botlint-slack</div>
+    <p class="footer-tagline">Testing utilities for Slack bots. Block Kit validation and SDK mocking. Open source, MIT licence.</p>
+    <div class="footer-badge">&#x2713; v0.1.2 live on npm</div>
+  </div>
+  <div class="footer-col">
+    <h4>Package</h4>
+    <a href="https://www.npmjs.com/package/botlint-slack">npm &rarr;</a>
+    <a href="https://github.com/markkenangray-ui/botlint">GitHub &rarr;</a>
+    <a href="https://github.com/markkenangray-ui/botlint/issues">Issues</a>
+    <a href="https://github.com/markkenangray-ui/botlint/blob/main/README.md">README</a>
+  </div>
+  <div class="footer-col">
+    <h4>Resources</h4>
+    <a href="https://dev.to/markturk87/the-definitive-guide-to-testing-slack-bots-and-why-its-been-so-hard-5feh">Blog post &rarr;</a>
+    <a href="https://github.com/slackapi/bolt-js/issues/1652">bolt-js #1652</a>
+    <a href="https://github.com/slackapi/bolt-python/issues/380">bolt-python #380</a>
+  </div>
+  <div class="footer-col">
+    <h4>Docs</h4>
+    <a href="#docs">validate()</a>
+    <a href="#docs">createMockClient()</a>
+    <a href="#docs">Jest matchers</a>
+    <a href="#roadmap">Roadmap</a>
+  </div>
+</footer>
+
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('.docs-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.docs-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
