@@ -1,6 +1,6 @@
 > "I had to patch urllib.request.urlopen calls, since the Slack SDK uses that under the hood. It's a little nasty."
 
-# botlint
+# botlint-slack
 
 Testing utilities for Slack bots. Block Kit validation and SDK mocking — works with @slack/bolt, @slack/web-api, and any Slack bot framework.
 
@@ -13,13 +13,13 @@ botlint validates your blocks before they reach Slack — and lets you test your
 ## Install
 
 ```
-npm install botlint --save-dev
+npm install botlint-slack --save-dev
 ```
 
 ## Block Kit validation
 
 ```js
-const { validate } = require('botlint');
+const { validate } = require('botlint-slack');
 
 // Header text has a 150 character limit. This one is 160 characters.
 const blocks = [
@@ -64,7 +64,7 @@ validate({
 ## SDK mocking
 
 ```js
-const { createMockClient } = require('botlint');
+const { createMockClient } = require('botlint-slack');
 
 // --- The handler you want to test ---
 async function notifyUser(client, channel, username) {
