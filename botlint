@@ -1,0 +1,3 @@
+git init
+git config user.name Mark Gray
+git config user.email mark.kenan.gray@gmail.com
