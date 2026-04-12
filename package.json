@@ -1,13 +1,15 @@
 {
-  "name": "botlint",
-  "version": "1.0.0",
-  "description": "",
+  "name": "botlint-slack",
+  "version": "0.1.0",
+  "description": "Testing utilities for Slack bots — Block Kit validation and SDK mocking",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+  "files": ["src", "jest.js", "index.js", "README.md"],
+  "keywords": ["slack", "slack-bolt", "testing", "block-kit", "mock", "jest"],
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.0.0"
+  }
 }
