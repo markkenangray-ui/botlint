@@ -1,6 +1,6 @@
 {
   "name": "botlint-slack",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Testing utilities for Slack bots — Block Kit validation and SDK mocking",
   "homepage": "https://botlint.com",
   "main": "index.js",
